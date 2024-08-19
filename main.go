@@ -1,12 +1,15 @@
 package main
 
 import (
+	"database/sql"
 	"fmt"
 	"log"
 	"net/http"
 	"os"
+	"the-fthe/blog-aggregator-bootdev/internal/database"
 
 	"github.com/joho/godotenv"
+	_ "github.com/lib/pq"
 )
 
 func main() {
@@ -20,11 +23,24 @@ func main() {
 		log.Fatal("POPRT not set in .env file")
 	}
 
-	//create mux
+	dbURL := os.Getenv("DATABASE")
+	if dbURL == "" {
+		log.Fatal("DATABASE_URL enviroment variable is not set")
+	}
+
+	db, err := sql.Open("postgres", dbURL)
+	if err != nil {
+		log.Fatal(err)
+	}
+	dbQueries := database.New(db)
+
+	apiCfg := apiConfig{
+		DB: dbQueries,
+	}
+
 	mux := http.NewServeMux()
-	mux.HandleFunc("/", func(res http.ResponseWriter, req *http.Request) {
-		_, _ = res.Write([]byte("Hello world"))
-	})
+
+	mux.HandleFunc("POST /v1/user", apiCfg.handlerUsersCreate)
 
 	mux.HandleFunc("GET /v1/health", handlerReadines)
 	mux.HandleFunc("GET /v1/err", handlerErr)
