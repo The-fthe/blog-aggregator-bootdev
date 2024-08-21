@@ -44,7 +44,6 @@ func (cfg *apiConfig) handlerGetUsers(w http.ResponseWriter, r *http.Request) {
 	}
 
 	apiKey := r.Header.Get("Authorization")
-	fmt.Println("Authorization value: ", apiKey)
 	if apiKey == "" {
 		responseWithError(w, http.StatusBadRequest, "Authorization value is empty")
 		return
