@@ -40,10 +40,11 @@ func main() {
 
 	mux := http.NewServeMux()
 
-	mux.HandleFunc("POST /v1/user", apiCfg.handlerUsersCreate)
+	mux.HandleFunc("POST /v1/users", apiCfg.handlerUsersCreate)
 
 	mux.HandleFunc("GET /v1/health", handlerReadines)
 	mux.HandleFunc("GET /v1/err", handlerErr)
+	mux.HandleFunc("GET /v1/users", apiCfg.handlerGetUsers)
 
 	srv := http.Server{
 		Addr:    ":" + port,

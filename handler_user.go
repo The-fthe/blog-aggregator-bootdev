@@ -37,3 +37,25 @@ func (cfg *apiConfig) handlerUsersCreate(w http.ResponseWriter, r *http.Request)
 	responseWithJSON(w, http.StatusOK, databaseUserToUser(user))
 
 }
+
+func (cfg *apiConfig) handlerGetUsers(w http.ResponseWriter, r *http.Request) {
+	type parameters struct {
+		ApiKey string `json:"api_key"`
+	}
+
+	apiKey := r.Header.Get("Authorization")
+	fmt.Println("Authorization value: ", apiKey)
+	if apiKey == "" {
+		responseWithError(w, http.StatusBadRequest, "Authorization value is empty")
+		return
+	}
+
+	user, err := cfg.DB.GetUser(r.Context(), apiKey)
+
+	if err != nil {
+		responseWithError(w, http.StatusInternalServerError, "Authorization value is wrong")
+		return
+	}
+	responseWithJSON(w, http.StatusOK, databaseUserToUser(user))
+
+}
