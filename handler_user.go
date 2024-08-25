@@ -12,14 +12,14 @@ import (
 
 func (cfg *apiConfig) handlerUsersCreate(w http.ResponseWriter, r *http.Request) {
 	type parameters struct {
-		Name string `json:"name"`
+		Name string
 	}
 
 	decoder := json.NewDecoder(r.Body)
 	params := parameters{}
 	err := decoder.Decode(&params)
 	if err != nil {
-		responseWithError(w, http.StatusInternalServerError, "Couldn'% decode paramters")
+		responseWithError(w, http.StatusInternalServerError, "Couldn't decode parameters")
 		return
 	}
 

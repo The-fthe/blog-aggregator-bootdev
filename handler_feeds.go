@@ -1,9 +1,57 @@
 package main
 
-import "net/http"
+import (
+	"database/sql"
+	"encoding/json"
+	"log"
+	"net/http"
+	"the-fthe/blog-aggregator-bootdev/internal/database"
+	"time"
 
-func (cfg *apiConfig) handleCreateFeed(w http.ResponseWriter, r *http.Request) {
-	type paraters struct {
+	"github.com/google/uuid"
+)
+
+func (cfg *apiConfig) handleFeedCreate(w http.ResponseWriter, r *http.Request, user database.User) {
+	type parameters struct {
+		Name string `json:"name"`
+		Url  string `json:"url"`
 	}
 
+	decoder := json.NewDecoder(r.Body)
+	params := parameters{}
+	err := decoder.Decode(&params)
+	if err != nil {
+		responseWithError(w, http.StatusInternalServerError, "Couldn't decode parameters")
+		return
+	}
+	//TODO: add check for params.Name and params.Url
+
+	feed, err := cfg.DB.CreateFeed(r.Context(), database.CreateFeedParams{
+		ID:        uuid.New(),
+		CreatedAt: time.Now().UTC(),
+		UpdatedAt: time.Now().UTC(),
+		Name:      sql.NullString{String: params.Name, Valid: true},
+		Url:       sql.NullString{String: params.Url, Valid: true},
+		UserID:    user.ID,
+	})
+	if err != nil {
+		responseWithError(w, http.StatusInternalServerError, "Create feed failed")
+		return
+	}
+	responseWithJSON(w, http.StatusOK, databaseFeedToFeed(feed))
+
+}
+
+func (cfg *apiConfig) handlerFeedsGet(w http.ResponseWriter, r *http.Request) {
+	log.Println("Handler feeds get is called")
+	feeds, err := cfg.DB.GetFeeds(r.Context())
+	if err != nil {
+		responseWithError(w, http.StatusInternalServerError, "Get feeds from database failed")
+		return
+	}
+	feedsJson := []Feed{}
+	for _, feedJson := range feeds {
+		feedsJson = append(feedsJson, databaseFeedToFeed(feedJson))
+	}
+	responseWithJSON(w, http.StatusOK, feeds)
 }
