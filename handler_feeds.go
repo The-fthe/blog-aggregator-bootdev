@@ -3,7 +3,6 @@ package main
 import (
 	"database/sql"
 	"encoding/json"
-	"log"
 	"net/http"
 	"the-fthe/blog-aggregator-bootdev/internal/database"
 	"time"
@@ -43,15 +42,10 @@ func (cfg *apiConfig) handleFeedCreate(w http.ResponseWriter, r *http.Request, u
 }
 
 func (cfg *apiConfig) handlerFeedsGet(w http.ResponseWriter, r *http.Request) {
-	log.Println("Handler feeds get is called")
 	feeds, err := cfg.DB.GetFeeds(r.Context())
 	if err != nil {
 		responseWithError(w, http.StatusInternalServerError, "Get feeds from database failed")
 		return
 	}
-	feedsJson := []Feed{}
-	for _, feedJson := range feeds {
-		feedsJson = append(feedsJson, databaseFeedToFeed(feedJson))
-	}
-	responseWithJSON(w, http.StatusOK, feeds)
+	responseWithJSON(w, http.StatusOK, databseFeedsToFeeds(feeds))
 }
