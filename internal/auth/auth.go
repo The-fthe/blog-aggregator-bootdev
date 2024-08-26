@@ -2,7 +2,6 @@ package auth
 
 import (
 	"errors"
-	"log"
 	"net/http"
 	"strings"
 )
@@ -18,6 +17,5 @@ func GetAPIKey(header http.Header) (string, error) {
 	if len(splitAuth) < 2 || splitAuth[0] != "ApiKey" {
 		return "", errors.New("malformed authrozation header")
 	}
-	log.Println("authrozation: ", splitAuth[1])
 	return splitAuth[1], nil
 }

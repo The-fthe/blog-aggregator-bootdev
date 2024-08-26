@@ -13,3 +13,6 @@ RETURNING *;
 -- name: GetFeeds :many
 SELECT * FROM feeds
 ORDER BY name;
+
+-- name: GetFeed :one
+SELECT * FROM feeds WHERE id = $1;

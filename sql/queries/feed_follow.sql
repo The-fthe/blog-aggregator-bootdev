@@ -1,5 +1,5 @@
--- name CreateFeedFollow: one
-INSERT INTO follow_feed(id, feed_id, user_id, created_at, updated_at)
+-- name: CreateFeedFollow :one
+INSERT INTO feed_follows(id, feed_id, user_id, created_at, updated_at)
 VALUES(
   $1,
   $2,
@@ -8,5 +8,4 @@ VALUES(
   $5
 )
 RETURNING *;
-
 
