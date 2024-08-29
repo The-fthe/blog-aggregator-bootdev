@@ -33,11 +33,18 @@ func (cfg *apiConfig) handleFeedCreate(w http.ResponseWriter, r *http.Request, u
 		Url:       sql.NullString{String: params.Url, Valid: true},
 		UserID:    user.ID,
 	})
+	feedFollow, err := cfg.DB.CreateFeedFollow(r.Context(), database.CreateFeedFollowParams{
+		ID:        uuid.New(),
+		FeedID:    feed.ID,
+		UserID:    user.ID,
+		CreatedAt: time.Now().UTC(),
+		UpdatedAt: time.Now().UTC(),
+	})
 	if err != nil {
 		responseWithError(w, http.StatusInternalServerError, "Create feed failed")
 		return
 	}
-	responseWithJSON(w, http.StatusOK, databaseFeedToFeed(feed))
+	responseWithJSON(w, http.StatusOK, databaseFeedAndFeedFollowToFeedAndFeedFollow(feed, feedFollow))
 
 }
 
