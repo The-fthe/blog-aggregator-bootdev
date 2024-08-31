@@ -54,5 +54,5 @@ func (cfg *apiConfig) handlerFeedsGet(w http.ResponseWriter, r *http.Request) {
 		responseWithError(w, http.StatusInternalServerError, "Get feeds from database failed")
 		return
 	}
-	responseWithJSON(w, http.StatusOK, databseFeedsToFeeds(feeds))
+	responseWithJSON(w, http.StatusOK, databaseFeedsToFeeds(feeds))
 }

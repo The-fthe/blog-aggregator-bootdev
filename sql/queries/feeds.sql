@@ -16,3 +16,9 @@ ORDER BY name;
 
 -- name: GetFeed :one
 SELECT * FROM feeds WHERE id = $1;
+
+-- name: GetNextFeedsToFetch :many
+SELECT * 
+FROM feeds
+ORDER BY last_feteched_at IS NULL DESC, last_fetched_at ASC
+LIMIT $1;
