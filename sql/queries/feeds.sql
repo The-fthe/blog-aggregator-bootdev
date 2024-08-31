@@ -22,3 +22,10 @@ SELECT *
 FROM feeds
 ORDER BY last_feteched_at IS NULL DESC, last_fetched_at ASC
 LIMIT $1;
+
+-- name: MarkFeedFetched :exec
+UPDATE feeds
+ set updated_at = $2,
+  last_fetched_at = $3
+WHERE id = $1;
+

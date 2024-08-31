@@ -149,3 +149,21 @@ func (q *Queries) GetNextFeedsToFetch(ctx context.Context, limit int32) ([]Feed,
 	}
 	return items, nil
 }
+
+const markFeedFetched = `-- name: MarkFeedFetched :exec
+UPDATE feeds
+ set updated_at = $2,
+  last_fetched_at = $3
+WHERE id = $1
+`
+
+type MarkFeedFetchedParams struct {
+	ID            uuid.UUID
+	UpdatedAt     time.Time
+	LastFetchedAt sql.NullTime
+}
+
+func (q *Queries) MarkFeedFetched(ctx context.Context, arg MarkFeedFetchedParams) error {
+	_, err := q.db.ExecContext(ctx, markFeedFetched, arg.ID, arg.UpdatedAt, arg.LastFetchedAt)
+	return err
+}
