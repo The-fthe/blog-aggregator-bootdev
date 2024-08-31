@@ -3,12 +3,43 @@ package main
 import (
 	"database/sql"
 	"encoding/json"
+	"encoding/xml"
+	"errors"
+	"github.com/google/uuid"
+	"io"
 	"net/http"
 	"the-fthe/blog-aggregator-bootdev/internal/database"
 	"time"
-
-	"github.com/google/uuid"
 )
+
+type FeedRss struct {
+	XMLName xml.Name `xml:"rss"`
+	Text    string   `xml:",chardata"`
+	Version string   `xml:"version,attr"`
+	Atom    string   `xml:"atom,attr"`
+	Channel struct {
+		Text  string `xml:",chardata"`
+		Title string `xml:"title"`
+		Link  struct {
+			Text string `xml:",chardata"`
+			Href string `xml:"href,attr"`
+			Rel  string `xml:"rel,attr"`
+			Type string `xml:"type,attr"`
+		} `xml:"link"`
+		Description   string `xml:"description"`
+		Generator     string `xml:"generator"`
+		Language      string `xml:"language"`
+		LastBuildDate string `xml:"lastBuildDate"`
+		Item          []struct {
+			Text        string `xml:",chardata"`
+			Title       string `xml:"title"`
+			Link        string `xml:"link"`
+			PubDate     string `xml:"pubDate"`
+			Guid        string `xml:"guid"`
+			Description string `xml:"description"`
+		} `xml:"item"`
+	} `xml:"channel"`
+}
 
 func (cfg *apiConfig) handleFeedCreate(w http.ResponseWriter, r *http.Request, user database.User) {
 	type parameters struct {
@@ -55,4 +86,38 @@ func (cfg *apiConfig) handlerFeedsGet(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	responseWithJSON(w, http.StatusOK, databaseFeedsToFeeds(feeds))
+}
+
+func FetchDataFromFeed(feedUrl string) (database.Feed, error) {
+
+	r, err := http.Get(feedUrl)
+	if err != nil {
+		return database.Feed{}, errors.New("get feedUrl data failed")
+	}
+	defer r.Body.Close()
+
+	body, err := io.ReadAll(r.Body)
+	if err != nil {
+		return database.Feed{}, errors.New("read url body failed")
+	}
+	feedRssStr := string(body)
+	var feedRss FeedRss
+	err = xml.Unmarshal([]byte(feedRssStr), &feedRss)
+	if err != nil {
+		return database.Feed{}, errors.New("xmml Unmarshal failed")
+	}
+
+	return RssFeedToFeed(feedRss), nil
+}
+
+func RssFeedToFeed(feedRss FeedRss) database.Feed {
+	return database.Feed{
+		ID:            uuid.New(),
+		CreatedAt:     time.Now().UTC(),
+		UpdatedAt:     time.Now().UTC(),
+		Name:          sql.NullString{String: feedRss.Channel.Title},
+		Url:           sql.NullString{String: feedRss.Channel.Link.Text},
+		LastFetchedAt: sql.NullTime{Time: time.Now().UTC()},
+	}
+
 }
