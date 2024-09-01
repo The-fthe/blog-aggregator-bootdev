@@ -20,8 +20,12 @@ SELECT * FROM feeds WHERE id = $1;
 -- name: GetNextFeedsToFetch :many
 SELECT * 
 FROM feeds
-ORDER BY last_feteched_at IS NULL DESC, last_fetched_at ASC
-LIMIT $1;
+WHERE user_id =$1
+ORDER BY last_fetched_at IS NULL DESC, last_fetched_at ASC
+LIMIT $2;
+
+-- name: DeleteFeed :exec
+DELETE FROM feeds WHERE id=$1 AND user_id =$2;
 
 -- name: MarkFeedFetched :exec
 UPDATE feeds

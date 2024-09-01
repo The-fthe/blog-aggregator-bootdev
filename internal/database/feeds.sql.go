@@ -57,6 +57,20 @@ func (q *Queries) CreateFeed(ctx context.Context, arg CreateFeedParams) (Feed, e
 	return i, err
 }
 
+const deleteFeed = `-- name: DeleteFeed :exec
+DELETE FROM feeds WHERE id=$1 AND user_id =$2
+`
+
+type DeleteFeedParams struct {
+	ID     uuid.UUID
+	UserID uuid.UUID
+}
+
+func (q *Queries) DeleteFeed(ctx context.Context, arg DeleteFeedParams) error {
+	_, err := q.db.ExecContext(ctx, deleteFeed, arg.ID, arg.UserID)
+	return err
+}
+
 const getFeed = `-- name: GetFeed :one
 SELECT id, created_at, updated_at, name, url, user_id, last_fetched_at FROM feeds WHERE id = $1
 `
@@ -115,12 +129,18 @@ func (q *Queries) GetFeeds(ctx context.Context) ([]Feed, error) {
 const getNextFeedsToFetch = `-- name: GetNextFeedsToFetch :many
 SELECT id, created_at, updated_at, name, url, user_id, last_fetched_at 
 FROM feeds
-ORDER BY last_feteched_at IS NULL DESC, last_fetched_at ASC
-LIMIT $1
+WHERE user_id =$1
+ORDER BY last_fetched_at IS NULL DESC, last_fetched_at ASC
+LIMIT $2
 `
 
-func (q *Queries) GetNextFeedsToFetch(ctx context.Context, limit int32) ([]Feed, error) {
-	rows, err := q.db.QueryContext(ctx, getNextFeedsToFetch, limit)
+type GetNextFeedsToFetchParams struct {
+	UserID uuid.UUID
+	Limit  int32
+}
+
+func (q *Queries) GetNextFeedsToFetch(ctx context.Context, arg GetNextFeedsToFetchParams) ([]Feed, error) {
+	rows, err := q.db.QueryContext(ctx, getNextFeedsToFetch, arg.UserID, arg.Limit)
 	if err != nil {
 		return nil, err
 	}

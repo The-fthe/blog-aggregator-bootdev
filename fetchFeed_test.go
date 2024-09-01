@@ -12,11 +12,11 @@ func TestFeedFetch(t *testing.T) {
 	}
 
 	for _, url := range testUrls {
-		feed, err := FetchDataFromFeed(url)
+		feedRss, err := FetchDataFromFeedUrl(url)
 		if err != nil {
 			t.Errorf("FetchDataFromFeed failed to fetch data")
 		}
-		fmt.Printf("feed: %v\n", databaseFeedToFeed(feed))
+		fmt.Printf("feed: %v\n", feedRss)
 	}
 
 }

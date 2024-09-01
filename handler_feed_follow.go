@@ -67,7 +67,7 @@ func (cfg *apiConfig) handlerFeedFollowDelete(w http.ResponseWriter, r *http.Req
 	feedFollowUuidstr := r.PathValue("feedFollowID")
 	feedFollowUuid, err := uuid.Parse(feedFollowUuidstr)
 	if err != nil {
-		responseWithError(w, http.StatusInternalServerError, "UUID feed doesn't exist")
+		responseWithError(w, http.StatusInternalServerError, "UUID feed follow doesn't exist")
 		return
 	}
 

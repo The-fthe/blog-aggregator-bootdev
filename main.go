@@ -7,6 +7,7 @@ import (
 	"net/http"
 	"os"
 	"the-fthe/blog-aggregator-bootdev/internal/database"
+	"time"
 
 	"github.com/joho/godotenv"
 	_ "github.com/lib/pq"
@@ -35,10 +36,15 @@ func main() {
 	dbQueries := database.New(db)
 
 	apiCfg := apiConfig{
-		DB: dbQueries,
+		DB:     dbQueries,
+		Ticker: time.NewTicker(time.Second * 5),
+		N:      1,
 	}
 
 	mux := http.NewServeMux()
+
+	mux.HandleFunc("GET /v1/", apiCfg.middlewareAuth(apiCfg.StartFetchingRoutine))
+	defer apiCfg.Ticker.Stop()
 
 	//health and err
 	mux.HandleFunc("GET /v1/health", handlerReadines)
@@ -51,6 +57,7 @@ func main() {
 	//feeds
 	mux.HandleFunc("POST /v1/feeds", apiCfg.middlewareAuth(apiCfg.handleFeedCreate))
 	mux.HandleFunc("GET /v1/feeds", apiCfg.handlerFeedsGet)
+	mux.HandleFunc("DELETE /v1/feeds/{feedID}", apiCfg.middlewareAuth(apiCfg.handlerFeedDelete))
 
 	//feedfollow
 	mux.HandleFunc("GET /v1/feed_follows", apiCfg.middlewareAuth(apiCfg.handlerFeedFollowsGet))
