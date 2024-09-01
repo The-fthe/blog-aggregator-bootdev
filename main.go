@@ -36,15 +36,10 @@ func main() {
 	dbQueries := database.New(db)
 
 	apiCfg := apiConfig{
-		DB:     dbQueries,
-		Ticker: time.NewTicker(time.Second * 5),
-		N:      1,
+		DB: dbQueries,
 	}
 
 	mux := http.NewServeMux()
-
-	mux.HandleFunc("GET /v1/", apiCfg.middlewareAuth(apiCfg.StartFetchingRoutine))
-	defer apiCfg.Ticker.Stop()
 
 	//health and err
 	mux.HandleFunc("GET /v1/health", handlerReadines)
@@ -68,6 +63,10 @@ func main() {
 		Addr:    ":" + port,
 		Handler: mux,
 	}
+
+	const collectionConcurrency = 10
+	const collectionInterval = time.Minute
+	go startScraping(dbQueries, collectionConcurrency, collectionInterval)
 
 	fmt.Println("Server running on port", port)
 	log.Fatal(srv.ListenAndServe())

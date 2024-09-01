@@ -129,18 +129,12 @@ func (q *Queries) GetFeeds(ctx context.Context) ([]Feed, error) {
 const getNextFeedsToFetch = `-- name: GetNextFeedsToFetch :many
 SELECT id, created_at, updated_at, name, url, user_id, last_fetched_at 
 FROM feeds
-WHERE user_id =$1
-ORDER BY last_fetched_at IS NULL DESC, last_fetched_at ASC
-LIMIT $2
+ORDER BY last_fetched_at ASC NULLS FIRST
+LIMIT $1
 `
 
-type GetNextFeedsToFetchParams struct {
-	UserID uuid.UUID
-	Limit  int32
-}
-
-func (q *Queries) GetNextFeedsToFetch(ctx context.Context, arg GetNextFeedsToFetchParams) ([]Feed, error) {
-	rows, err := q.db.QueryContext(ctx, getNextFeedsToFetch, arg.UserID, arg.Limit)
+func (q *Queries) GetNextFeedsToFetch(ctx context.Context, limit int32) ([]Feed, error) {
+	rows, err := q.db.QueryContext(ctx, getNextFeedsToFetch, limit)
 	if err != nil {
 		return nil, err
 	}
@@ -170,20 +164,25 @@ func (q *Queries) GetNextFeedsToFetch(ctx context.Context, arg GetNextFeedsToFet
 	return items, nil
 }
 
-const markFeedFetched = `-- name: MarkFeedFetched :exec
+const markFeedFetched = `-- name: MarkFeedFetched :one
 UPDATE feeds
- set updated_at = $2,
-  last_fetched_at = $3
+ set last_fetched_at = NOW(),
+updated_at= NOW()
 WHERE id = $1
+RETURNING id, created_at, updated_at, name, url, user_id, last_fetched_at
 `
 
-type MarkFeedFetchedParams struct {
-	ID            uuid.UUID
-	UpdatedAt     time.Time
-	LastFetchedAt sql.NullTime
-}
-
-func (q *Queries) MarkFeedFetched(ctx context.Context, arg MarkFeedFetchedParams) error {
-	_, err := q.db.ExecContext(ctx, markFeedFetched, arg.ID, arg.UpdatedAt, arg.LastFetchedAt)
-	return err
+func (q *Queries) MarkFeedFetched(ctx context.Context, id uuid.UUID) (Feed, error) {
+	row := q.db.QueryRowContext(ctx, markFeedFetched, id)
+	var i Feed
+	err := row.Scan(
+		&i.ID,
+		&i.CreatedAt,
+		&i.UpdatedAt,
+		&i.Name,
+		&i.Url,
+		&i.UserID,
+		&i.LastFetchedAt,
+	)
+	return i, err
 }

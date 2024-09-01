@@ -17,19 +17,19 @@ ORDER BY name;
 -- name: GetFeed :one
 SELECT * FROM feeds WHERE id = $1;
 
--- name: GetNextFeedsToFetch :many
-SELECT * 
-FROM feeds
-WHERE user_id =$1
-ORDER BY last_fetched_at IS NULL DESC, last_fetched_at ASC
-LIMIT $2;
-
 -- name: DeleteFeed :exec
 DELETE FROM feeds WHERE id=$1 AND user_id =$2;
 
--- name: MarkFeedFetched :exec
+-- name: GetNextFeedsToFetch :many
+SELECT * 
+FROM feeds
+ORDER BY last_fetched_at ASC NULLS FIRST
+LIMIT $1;
+
+-- name: MarkFeedFetched :one
 UPDATE feeds
- set updated_at = $2,
-  last_fetched_at = $3
-WHERE id = $1;
+ set last_fetched_at = NOW(),
+updated_at= NOW()
+WHERE id = $1
+RETURNING * ;
 

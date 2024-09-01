@@ -4,9 +4,6 @@ import (
 	"database/sql"
 	"encoding/json"
 	"encoding/xml"
-	"errors"
-	"fmt"
-	"io"
 	"net/http"
 	"the-fthe/blog-aggregator-bootdev/internal/database"
 	"time"
@@ -108,71 +105,5 @@ func (cfg *apiConfig) handlerFeedDelete(w http.ResponseWriter, r *http.Request, 
 		responseWithError(w, http.StatusInternalServerError, "detele feed failed")
 	}
 	responseWithJSON(w, http.StatusOK, Response{Message: "delete feed successful"})
-
-}
-
-func (cfg *apiConfig) StartFetchingRoutine(w http.ResponseWriter, r *http.Request, user database.User) {
-	feeds, err := cfg.DB.GetNextFeedsToFetch(r.Context(),
-		database.GetNextFeedsToFetchParams{
-			UserID: user.ID,
-			Limit:  int32(cfg.N),
-		})
-	if err != nil {
-		responseWithError(w, http.StatusInternalServerError, fmt.Sprintf("GetNextFeedsToFetch failed, msg: =%s", err.Error()))
-		return
-	}
-	fmt.Println(feeds)
-	for i := 0; i < cfg.N; i++ {
-		go func() {
-			for {
-				select {
-				case <-cfg.Ticker.C:
-					// for _, feed := range feeds {
-					// 	fmt.Println(feed)
-					// }
-					for _, feed := range feeds {
-						feedRss, err := FetchDataFromFeedUrl(feed.Url.String)
-						if err != nil {
-							responseWithError(w, http.StatusInternalServerError, "get rssXml")
-							return
-						}
-						fmt.Println("feedRss Link: ", feedRss.Channel.Title)
-					}
-				}
-			}
-		}()
-	}
-}
-
-func FetchDataFromFeedUrl(feedUrl string) (FeedRss, error) {
-	r, err := http.Get(feedUrl)
-	if err != nil {
-		return FeedRss{}, errors.New("get feedUrl data failed")
-	}
-	defer r.Body.Close()
-
-	body, err := io.ReadAll(r.Body)
-	if err != nil {
-		return FeedRss{}, fmt.Errorf("Read url:%s body failed", feedUrl)
-	}
-	feedRssStr := string(body)
-	var feedRss FeedRss
-	err = xml.Unmarshal([]byte(feedRssStr), &feedRss)
-	if err != nil {
-		return FeedRss{}, errors.New("xml Unmarshal failed")
-	}
-	fmt.Println("-------- feedRss ----------")
-	return feedRss, nil
-}
-
-func RssFeedToFeed(feedRss FeedRss) database.Feed {
-	return database.Feed{
-		ID:            uuid.New(),
-		CreatedAt:     time.Now().UTC(),
-		UpdatedAt:     time.Now().UTC(),
-		Name:          sql.NullString{String: feedRss.Channel.Title},
-		Url:           sql.NullString{String: feedRss.Channel.Link.Text},
-		LastFetchedAt: sql.NullTime{Time: time.Now().UTC()},
-	}
 
 }

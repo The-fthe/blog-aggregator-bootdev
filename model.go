@@ -1,10 +1,10 @@
 package main
 
 import (
-	"time"
-
+	"database/sql"
 	"github.com/google/uuid"
 	"the-fthe/blog-aggregator-bootdev/internal/database"
+	"time"
 )
 
 type User struct {
@@ -26,13 +26,13 @@ func databaseUserToUser(user database.User) User {
 }
 
 type Feed struct {
-	ID            uuid.UUID `json:"id"`
-	CreatedAt     time.Time `json:"created_at"`
-	UpdatedAt     time.Time `json:"updated_at"`
-	Name          string    `json:"name"`
-	Url           string    `json:"url"`
-	UserID        string    `json:"user_id"`
-	LastFetchedAt time.Time `json:"last_fetched_at`
+	ID            uuid.UUID  `json:"id"`
+	CreatedAt     time.Time  `json:"created_at"`
+	UpdatedAt     time.Time  `json:"updated_at"`
+	Name          string     `json:"name"`
+	Url           string     `json:"url"`
+	UserID        string     `json:"user_id"`
+	LastFetchedAt *time.Time `json:"last_fetched_at`
 }
 
 func databaseFeedToFeed(feed database.Feed) Feed {
@@ -43,7 +43,7 @@ func databaseFeedToFeed(feed database.Feed) Feed {
 		Name:          feed.Name.String,
 		UserID:        feed.UserID.String(),
 		Url:           feed.Url.String,
-		LastFetchedAt: feed.LastFetchedAt.Time,
+		LastFetchedAt: nullTimeToTimePtr(feed.LastFetchedAt),
 	}
 }
 
@@ -91,4 +91,11 @@ func databaseFeedAndFeedFollowToFeedAndFeedFollow(feed database.Feed, feedFollow
 		Feed:       databaseFeedToFeed(feed),
 		FeedFollow: databaseFeedFollowToFeedFollow(feedFollow),
 	}
+}
+
+func nullTimeToTimePtr(t sql.NullTime) *time.Time {
+	if t.Valid {
+		return &t.Time
+	}
+	return nil
 }
