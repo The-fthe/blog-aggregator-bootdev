@@ -93,6 +93,35 @@ func databaseFeedAndFeedFollowToFeedAndFeedFollow(feed database.Feed, feedFollow
 	}
 }
 
+type Post struct {
+	ID          uuid.UUID
+	CreatedAt   time.Time
+	UpdatedAt   time.Time
+	Title       string
+	Url         string
+	Description string
+	PublishedAt time.Time
+	FeedID      uuid.UUID
+}
+
+func databasePostsToPosts(posts []database.Post) []Post {
+	results := make([]Post, len(posts))
+	for i, post := range posts {
+		results[i] = Post{
+			ID:          post.ID,
+			CreatedAt:   post.CreatedAt,
+			UpdatedAt:   post.UpdatedAt,
+			Title:       post.Title.String,
+			Url:         post.Url.String,
+			Description: post.Description.String,
+			FeedID:      post.FeedID,
+		}
+
+	}
+	return results
+
+}
+
 func nullTimeToTimePtr(t sql.NullTime) *time.Time {
 	if t.Valid {
 		return &t.Time

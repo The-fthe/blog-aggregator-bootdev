@@ -13,7 +13,7 @@ VALUES(
 RETURNING *;
 
 -- name: GetPostByUser :many
-SELECT post.* FROM posts
+SELECT posts.* FROM posts
 JOIN feeds ON posts.feed_id = feeds.id
 WHERE feeds.user_id = $1
 LIMIT $2;

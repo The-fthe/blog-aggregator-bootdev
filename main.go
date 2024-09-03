@@ -54,10 +54,13 @@ func main() {
 	mux.HandleFunc("GET /v1/feeds", apiCfg.handlerFeedsGet)
 	mux.HandleFunc("DELETE /v1/feeds/{feedID}", apiCfg.middlewareAuth(apiCfg.handlerFeedDelete))
 
-	//feedfollow
+	//feedfollows
 	mux.HandleFunc("GET /v1/feed_follows", apiCfg.middlewareAuth(apiCfg.handlerFeedFollowsGet))
 	mux.HandleFunc("POST /v1/feed_follows", apiCfg.middlewareAuth(apiCfg.handlerFeedFollowCreate))
 	mux.HandleFunc("DELETE /v1/feed_follows/{feedFollowID}", apiCfg.middlewareAuth(apiCfg.handlerFeedFollowDelete))
+
+	//posts
+	mux.HandleFunc("GET /v1/posts/{limit}", apiCfg.middlewareAuth(apiCfg.handlerPostsGet))
 
 	srv := http.Server{
 		Addr:    ":" + port,
@@ -65,7 +68,7 @@ func main() {
 	}
 
 	const collectionConcurrency = 10
-	const collectionInterval = time.Minute
+	const collectionInterval = time.Minute * 10
 	go startScraping(dbQueries, collectionConcurrency, collectionInterval)
 
 	fmt.Println("Server running on port", port)

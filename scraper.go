@@ -2,6 +2,7 @@ package main
 
 import (
 	"context"
+	"database/sql"
 	"encoding/xml"
 	"io"
 	"log"
@@ -9,6 +10,8 @@ import (
 	"sync"
 	"the-fthe/blog-aggregator-bootdev/internal/database"
 	"time"
+
+	"github.com/google/uuid"
 )
 
 func startScraping(db *database.Queries, concurrency int, timeBetweenRequest time.Duration) {
@@ -51,7 +54,34 @@ func scrapeFeed(db *database.Queries, wg *sync.WaitGroup, feed database.Feed) {
 		return
 	}
 	for _, item := range feedData.Channel.Item {
-		log.Println("Found post", item.Title)
+		//log.Println("Found post", item.Title)
+		post := database.CreatePostParams{
+			ID:          uuid.New(),
+			CreatedAt:   time.Now().UTC(),
+			UpdatedAt:   time.Now().UTC(),
+			Title:       sql.NullString{String: item.Title},
+			Url:         sql.NullString{String: item.Link},
+			Description: sql.NullString{String: item.Description},
+			FeedID:      feed.ID,
+		}
+		layout := "Mon, 02 Jan 2006 15:04:05 -0700"
+		parsedTime, err := time.Parse(layout, item.PubDate)
+		if err != nil {
+			log.Println("title ", post.Title, " Parse time failed")
+			_, err = db.CreatePost(context.Background(), post)
+			if err != nil {
+				log.Println("non time post created failed: ", post.Title, err.Error())
+			}
+			continue
+		}
+		log.Println("PubDate: ", item.PubDate, "ParsedDate: ", parsedTime)
+		publishAt := sql.NullTime{Time: parsedTime}
+		post.PublishedAt = publishAt
+		_, err = db.CreatePost(context.Background(), post)
+		if err != nil {
+			log.Println("post created failed: ", post.Title, err.Error())
+		}
+
 	}
 	log.Printf("Feed %s collected, %v post found", feed.Name, len(feedData.Channel.Item))
 }
