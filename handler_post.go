@@ -7,18 +7,16 @@ import (
 )
 
 func (cfg *apiConfig) handlerPostsGet(w http.ResponseWriter, r *http.Request, user database.User) {
-	limitStr := r.PathValue("limit")
-	defaultLimit := 5
+	limitStr := r.URL.Query().Get("limit")
+	limit := 10
 
-	limit, err := strconv.Atoi(limitStr)
-
-	if err == nil {
-		defaultLimit = limit
+	if specifiedLimit, err := strconv.Atoi(limitStr); err == nil {
+		limit = specifiedLimit
 	}
 
 	posts, err := cfg.DB.GetPostByUser(r.Context(), database.GetPostByUserParams{
 		UserID: user.ID,
-		Limit:  int32(defaultLimit),
+		Limit:  int32(limit),
 	})
 
 	if err != nil {

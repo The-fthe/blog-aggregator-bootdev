@@ -97,10 +97,10 @@ type Post struct {
 	ID          uuid.UUID
 	CreatedAt   time.Time
 	UpdatedAt   time.Time
-	Title       string
-	Url         string
-	Description string
-	PublishedAt time.Time
+	Title       *string
+	Url         *string
+	Description *string
+	PublishedAt *time.Time
 	FeedID      uuid.UUID
 }
 
@@ -111,9 +111,10 @@ func databasePostsToPosts(posts []database.Post) []Post {
 			ID:          post.ID,
 			CreatedAt:   post.CreatedAt,
 			UpdatedAt:   post.UpdatedAt,
-			Title:       post.Title.String,
-			Url:         post.Url.String,
-			Description: post.Description.String,
+			Title:       nullStringToStringPtr(post.Title),
+			Url:         nullStringToStringPtr(post.Url),
+			Description: nullStringToStringPtr(post.Description),
+			PublishedAt: nullTimeToTimePtr(post.PublishedAt),
 			FeedID:      post.FeedID,
 		}
 
@@ -125,6 +126,13 @@ func databasePostsToPosts(posts []database.Post) []Post {
 func nullTimeToTimePtr(t sql.NullTime) *time.Time {
 	if t.Valid {
 		return &t.Time
+	}
+	return nil
+}
+
+func nullStringToStringPtr(s sql.NullString) *string {
+	if s.Valid {
+		return &s.String
 	}
 	return nil
 }

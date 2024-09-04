@@ -14,6 +14,10 @@ RETURNING *;
 
 -- name: GetPostByUser :many
 SELECT posts.* FROM posts
-JOIN feeds ON posts.feed_id = feeds.id
-WHERE feeds.user_id = $1
+JOIN feed_follows ON feed_follows.feed_id = posts.feed_id
+WHERE feed_follows.user_id = $1
+ORDER BY posts.published_at DESC
 LIMIT $2;
+
+-- name: DeletePosts :exec
+DELETE FROM posts;

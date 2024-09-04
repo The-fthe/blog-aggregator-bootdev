@@ -1,6 +1,7 @@
 package main
 
 import (
+	"context"
 	"database/sql"
 	"fmt"
 	"log"
@@ -38,6 +39,8 @@ func main() {
 	apiCfg := apiConfig{
 		DB: dbQueries,
 	}
+	log.Println("Posts tables is deleted")
+	apiCfg.DB.DeletePosts(context.Background())
 
 	mux := http.NewServeMux()
 
@@ -60,7 +63,7 @@ func main() {
 	mux.HandleFunc("DELETE /v1/feed_follows/{feedFollowID}", apiCfg.middlewareAuth(apiCfg.handlerFeedFollowDelete))
 
 	//posts
-	mux.HandleFunc("GET /v1/posts/{limit}", apiCfg.middlewareAuth(apiCfg.handlerPostsGet))
+	mux.HandleFunc("GET /v1/posts", apiCfg.middlewareAuth(apiCfg.handlerPostsGet))
 
 	srv := http.Server{
 		Addr:    ":" + port,
